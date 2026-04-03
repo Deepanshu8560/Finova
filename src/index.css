@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply antialiased font-body;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for suggested-question chips */
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Page fade-in on route mount */
+  .page-fade {
+    animation: fade-in 0.3s ease both;
+  }
+
+  /* 3D Motion Graphic Utilities */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+  .animate-slow-spin {
+    animation: slow-spin 20s linear infinite;
+  }
+  .animate-parallax-float {
+    animation: parallax-float 6s ease-in-out infinite;
+  }
+  .animate-parallax-float-delayed {
+    animation: parallax-float 8s ease-in-out infinite 2s;
+  }
+  .animate-draw-line {
+    animation: draw-line 3s ease-out forwards;
+  }
+}
+
+/* ── GitHub-style AI progress bar ── */
+@keyframes progress-bar {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Skeleton shimmer ── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── Landing ticker scroll ── */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+/* ── Route-change fade ── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 3D Motion Graphics Keyframes ── */
+@keyframes slow-spin {
+  0% { transform: rotateX(55deg) rotateZ(-35deg); }
+  50% { transform: rotateX(55deg) rotateZ(-25deg); }
+  100% { transform: rotateX(55deg) rotateZ(-35deg); }
+}
+
+@keyframes parallax-float {
+  0%, 100% { transform: translateZ(60px) translateY(0px); }
+  50% { transform: translateZ(90px) translateY(-10px); }
+}
+
+@keyframes draw-line {
+  0% { stroke-dashoffset: 1000; opacity: 0; }
+  20% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8)); }
+}
