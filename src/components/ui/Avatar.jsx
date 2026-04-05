@@ -49,7 +49,7 @@ export const Avatar = ({
     xl: 'w-8 h-8',
   };
 
-  const baseStyles = 'relative inline-flex items-center justify-center rounded-full overflow-hidden shrink-0 bg-primary-100 text-primary-700 border border-primary-200 font-semibold';
+  const baseStyles = 'relative inline-flex items-center justify-center rounded-full overflow-hidden shrink-0 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 border border-primary-200 dark:border-primary-800 font-semibold';
   
   const combinedClass = [
     baseStyles,

@@ -26,10 +26,18 @@ function AnimatedPage({ children }) {
   );
 }
 
+import { useFinanceStore } from './store/useFinanceStore';
+
 /**
  * Main App component configuring routing, context providers, and animated page transitions.
  */
 function App() {
+  const init = useFinanceStore(s => s.init);
+
+  React.useEffect(() => {
+    init();
+  }, [init]);
+
   return (
     <AuthProvider>
       <BrowserRouter>

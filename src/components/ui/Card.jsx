@@ -21,8 +21,8 @@ export const Card = ({
   children,
   ...rest
 }) => {
-  const baseCardStyles = 'rounded-xl border border-slate-200 bg-surface-card flex flex-col overflow-hidden shadow-sm';
-  const hoverStyles = 'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5';
+  const baseCardStyles = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col overflow-hidden shadow-sm transition-colors duration-200';
+  const hoverStyles = 'transition-all duration-300 hover:shadow-card-hover dark:hover:shadow-indigo-500/10 hover:-translate-y-0.5';
 
   const combinedClass = [
     baseCardStyles,
@@ -33,7 +33,7 @@ export const Card = ({
   return (
     <div className={combinedClass} {...rest}>
       {header && (
-        <div className="px-5 py-4 border-b border-slate-100 flex-none bg-slate-50/50">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex-none bg-slate-50/50 dark:bg-slate-800/50">
           {header}
         </div>
       )}
@@ -43,7 +43,7 @@ export const Card = ({
       </div>
 
       {footer && (
-        <div className="px-5 py-4 border-t border-slate-100 flex-none bg-slate-50/50">
+        <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex-none bg-slate-50/50 dark:bg-slate-800/50">
           {footer}
         </div>
       )}

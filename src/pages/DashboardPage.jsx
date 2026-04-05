@@ -15,11 +15,30 @@ import { Card } from '../components/ui/Card';
 import { formatCurrency } from '../lib/utils';
 import { ROUTES } from '../lib/constants';
 import { NumberCounter } from '../components/ui/NumberCounter';
+import { LoadingSkeleton } from '../components/dashboard/LoadingSkeleton';
 
-const COLORS = ['#22C55E', '#3B82F6', '#F43F5E', '#A855F7', '#EAB308', '#06B6D4', '#F97316'];
+const COLORS = ['#22C55E', '#F43F5E', '#3B82F6', '#A855F7', '#EAB308', '#06B6D4', '#F97316'];
+
+const RangeFilter = ({ current, onChange }) => (
+  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg shrink-0 transition-colors">
+    {['30d', '90d', 'all'].map(r => (
+      <button 
+        key={r}
+        onClick={() => onChange(r)}
+        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider ${
+          current === r 
+            ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm' 
+            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+        }`}
+      >
+        {r}
+      </button>
+    ))}
+  </div>
+);
 
 const DashboardPage = () => {
-  const { transactions, getSummary } = useFinanceStore();
+  const { transactions, getSummary, isLoading } = useFinanceStore();
   const [timeRange, setTimeRange] = useState('all');
   const summary = getSummary();
 
@@ -120,78 +139,84 @@ const DashboardPage = () => {
       .sort((a, b) => b.value - a.value);
   }, [filteredTransactionsByRange]);
 
-  const RangeFilter = ({ current, onChange }) => (
-    <div className="flex items-center p-1 bg-slate-100 rounded-lg shrink-0">
-      {['30d', '90d', 'all'].map(r => (
-        <button 
-          key={r}
-          onClick={() => onChange(r)}
-          className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider ${current === r ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-        >
-          {r}
-        </button>
-      ))}
-    </div>
-  );
+  if (isLoading && transactions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <LoadingSkeleton width={200} height={32} />
+          <LoadingSkeleton width={300} height={16} className="mt-2" />
+        </header>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <LoadingSkeleton height={140} className="rounded-2xl" />
+          <LoadingSkeleton height={140} className="rounded-2xl" />
+          <LoadingSkeleton height={140} className="rounded-2xl" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <LoadingSkeleton height={400} className="lg:col-span-2 rounded-2xl" />
+          <LoadingSkeleton height={400} className="rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 leading-tight">Financial Overview</h1>
-          <p className="text-sm text-slate-500 mt-1">Real-time health check of your personal finances</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">Financial Overview</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Real-time health check of your personal finances</p>
         </div>
-        <Link to={ROUTES.TRANSACTIONS} className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-2 transition-all bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl border border-emerald-100/50 shadow-sm">
+        <Link to={ROUTES.TRANSACTIONS} className="text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center gap-2 transition-all bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-4 py-2 rounded-xl border border-emerald-100/50 dark:border-emerald-500/20 shadow-sm">
           Transaction History <ChevronRight className="w-4 h-4" />
         </Link>
       </header>
 
       {/* A. Summary Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-50/50 to-white hover:shadow-md transition-all duration-300">
+        <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-50/50 to-white dark:from-indigo-950/20 dark:to-slate-900 hover:shadow-md transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600 shadow-sm">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-500/10 rounded-2xl text-indigo-600 dark:text-indigo-400 shadow-sm">
               <Wallet className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-50/80 px-2 py-1 rounded-full shadow-sm border border-indigo-100/50">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-500/10 px-2 py-1 rounded-full shadow-sm border border-indigo-100/50 dark:border-indigo-500/10">
               <TrendingUp className="w-3 h-3" />
               <span>12.5%</span>
             </div>
           </div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Balance</p>
-          <h2 className="text-3xl font-bold text-slate-900 leading-none">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Total Balance</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white leading-none">
             <NumberCounter value={summary.totalBalance} formatter={formatCurrency} />
           </h2>
         </Card>
 
-        <Card className="border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white hover:shadow-md transition-all duration-300">
+        <Card className="border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-slate-900 hover:shadow-md transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600 shadow-sm">
+            <div className="p-3 bg-emerald-100 dark:bg-emerald-500/10 rounded-2xl text-emerald-600 dark:text-emerald-400 shadow-sm">
               <ArrowUpRight className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50/80 px-2 py-1 rounded-full shadow-sm border border-emerald-100/50">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-500/10 px-2 py-1 rounded-full shadow-sm border border-emerald-100/50 dark:border-emerald-500/10">
               <TrendingUp className="w-3 h-3" />
               <span>8.3%</span>
             </div>
           </div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Income</p>
-          <h2 className="text-3xl font-bold text-slate-900 leading-none">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Total Income</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white leading-none">
             <NumberCounter value={summary.totalIncome} formatter={formatCurrency} />
           </h2>
         </Card>
 
-        <Card className="border-none shadow-sm bg-gradient-to-br from-rose-50/50 to-white hover:shadow-md transition-all duration-300">
+        <Card className="border-none shadow-sm bg-gradient-to-br from-rose-50/50 to-white dark:from-rose-950/20 dark:to-slate-900 hover:shadow-md transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-rose-100 rounded-2xl text-rose-600 shadow-sm">
+            <div className="p-3 bg-rose-100 dark:bg-rose-500/10 rounded-2xl text-rose-600 dark:text-rose-400 shadow-sm">
               <ArrowDownRight className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50/80 px-2 py-1 rounded-full shadow-sm border border-rose-100/50">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-500/10 px-2 py-1 rounded-full shadow-sm border border-rose-100/50 dark:border-rose-500/10">
               <TrendingDown className="w-3 h-3" />
               <span>4.1%</span>
             </div>
           </div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Expenses</p>
-          <h2 className="text-3xl font-bold text-slate-900 leading-none">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Total Expenses</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white leading-none">
             <NumberCounter value={summary.totalExpenses} formatter={formatCurrency} />
           </h2>
         </Card>
@@ -201,14 +226,14 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Balance Trend (2/3 width) */}
         <Card className="lg:col-span-2 border-none shadow-elevated" bodyClassName="p-0">
-          <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100">
+          <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <h3 className="text-base font-bold text-slate-900 leading-none">Balance Trend</h3>
-              <p className="text-[11px] text-slate-400 font-medium mt-1">Cash flow activity</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-none">Balance Trend</h3>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1">Cash flow activity</p>
             </div>
             <div className="flex items-center gap-4">
               <RangeFilter current={timeRange} onChange={setTimeRange} />
-              <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-tight shadow-sm border border-emerald-100/50">
+              <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full uppercase tracking-tight shadow-sm border border-emerald-100/50 dark:border-emerald-500/10">
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>Trend View</span>
               </div>
@@ -218,12 +243,12 @@ const DashboardPage = () => {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                   <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b830" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={12} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v}`} />
                 <Tooltip 
@@ -239,11 +264,11 @@ const DashboardPage = () => {
         </Card>
 
         {/* Spending Breakdown (1/3 width) */}
-        <Card className="lg:col-span-1 border-none shadow-elevated flex flex-col h-full bg-white">
+        <Card className="lg:col-span-1 border-none shadow-elevated flex flex-col h-full">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 leading-none">Spending Breakdown</h3>
-              <p className="text-[11px] text-slate-400 font-medium mt-1">By category</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-none">Spending Breakdown</h3>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1">By category</p>
             </div>
             <RangeFilter current={timeRange} onChange={setTimeRange} />
           </div>
@@ -274,8 +299,8 @@ const DashboardPage = () => {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase leading-none mb-0.5">Total</p>
-                  <p className="text-sm font-mono font-bold text-slate-900 leading-none">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase leading-none mb-0.5">Total</p>
+                  <p className="text-sm font-mono font-bold text-slate-900 dark:text-white leading-none">
                     {formatCurrency(categoryData.reduce((acc, c) => acc + c.value, 0)).split('.')[0]}
                   </p>
                 </div>
@@ -287,9 +312,9 @@ const DashboardPage = () => {
                   <div key={category.name} className="flex items-center justify-between group">
                      <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                        <span className="text-[11px] font-bold text-slate-600 truncate max-w-[80px] uppercase tracking-tight">{category.name}</span>
+                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate max-w-[80px] uppercase tracking-tight">{category.name}</span>
                      </div>
-                     <span className="text-[11px] font-mono font-bold text-slate-900">{formatCurrency(category.value)}</span>
+                     <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-slate-200">{formatCurrency(category.value)}</span>
                   </div>
                ))}
             </div>
@@ -299,28 +324,28 @@ const DashboardPage = () => {
 
       {/* C. Recent Flows (Full Width) */}
       <Card className="border-none shadow-elevated" bodyClassName="p-0">
-        <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">
-          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+        <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             Recent Flows <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
           </h3>
-          <Link to={ROUTES.TRANSACTIONS} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-4">Browse Ledger</Link>
+          <Link to={ROUTES.TRANSACTIONS} className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 underline underline-offset-4">Browse Ledger</Link>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-6 p-8 overflow-y-auto min-h-[300px]">
           {recentTransactions.map((tx) => (
             <div key={tx.id} className="flex items-center gap-6 group hover:-translate-y-0.5 transition-all duration-300">
-              <div className={`w-14 h-14 rounded-3xl flex items-center justify-center shrink-0 shadow-sm transition-all duration-300 group-hover:shadow-md ${tx.type === 'income' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 'bg-rose-50 text-rose-600 border border-rose-100/50'}`}>
+              <div className={`w-14 h-14 rounded-3xl flex items-center justify-center shrink-0 shadow-sm transition-all duration-300 group-hover:shadow-md ${tx.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-500/20' : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-100/50 dark:border-rose-500/20'}`}>
                 {tx.type === 'income' ? <ArrowUpRight className="w-6.5 h-6.5" /> : <ArrowDownRight className="w-6.5 h-6.5" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-extrabold text-slate-900 truncate group-hover:text-indigo-600 transition-colors uppercase tracking-wider">{tx.merchant}</p>
+                <p className="text-sm font-extrabold text-slate-900 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-wider">{tx.merchant}</p>
                 <div className="flex items-center gap-2 mt-1.5">
-                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">{tx.category}</span>
-                   <span className="text-[10px] text-slate-300 font-bold">•</span>
-                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-700">{tx.category}</span>
+                   <span className="text-[10px] text-slate-300 dark:text-slate-700 font-bold">•</span>
+                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className={`text-base font-mono font-bold tracking-tight ${tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <p className={`text-base font-mono font-bold tracking-tight ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                 </p>
               </div>
@@ -328,6 +353,7 @@ const DashboardPage = () => {
           ))}
         </div>
       </Card>
+
     </div>
   );
 };

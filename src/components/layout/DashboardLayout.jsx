@@ -13,7 +13,7 @@ export const DashboardLayout = () => {
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 flex transition-colors duration-200">
 
         {/* Sidebar - on lg+ it occupies its natural width in the flex row */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />

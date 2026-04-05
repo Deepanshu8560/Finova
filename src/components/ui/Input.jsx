@@ -30,11 +30,11 @@ export const Input = React.forwardRef(({
   const inputId = id || generatedId;
   const hasError = Boolean(error);
 
-  const baseInputStyles = 'w-full rounded-lg bg-surface-card border px-3 text-sm text-slate-800 placeholder:text-slate-400 transition-all duration-200 outline-none';
+  const baseInputStyles = 'w-full rounded-lg bg-white dark:bg-slate-900 border px-3 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all duration-200 outline-none';
   
   const stateVariants = {
-    default: 'border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 hover:border-slate-400',
-    error: 'border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 text-rose-900',
+    default: 'border-slate-300 dark:border-slate-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 hover:border-slate-400 dark:hover:border-slate-600',
+    error: 'border-rose-300 dark:border-rose-900/50 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 text-rose-900 dark:text-rose-400',
   };
 
   const sizeVariants = {
@@ -60,7 +60,7 @@ export const Input = React.forwardRef(({
       {label && (
         <label 
           htmlFor={inputId} 
-          className="block text-sm font-medium text-slate-700 mb-1.5"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
         >
           {label}
         </label>

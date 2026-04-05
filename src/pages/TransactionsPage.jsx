@@ -17,7 +17,7 @@ const CATEGORIES = ['Housing', 'Food', 'Transport', 'Entertainment', 'Shopping',
 export const TransactionsPage = () => {
   const { 
     transactions, role, filters, setFilter, resetFilters, 
-    addTransaction, updateTransaction, deleteTransaction, setTransactions, addToast 
+    addTransaction, updateTransaction, deleteTransaction, setTransactions, addToast, isLoading 
   } = useFinanceStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,6 +56,16 @@ export const TransactionsPage = () => {
     setEditingTx(tx);
     setIsModalOpen(true);
   };
+
+  if (isLoading && transactions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <header><LoadingSkeleton width={200} height={32} /></header>
+        <Card bodyClassName="p-3"><LoadingSkeleton height={40} /></Card>
+        <Card bodyClassName="p-0 overflow-hidden"><LoadingSkeleton height={500} /></Card>
+      </div>
+    );
+  }
 
   const handleDelete = (id) => {
     if (!isAdmin) return;
@@ -149,7 +159,7 @@ export const TransactionsPage = () => {
       
       {/* Read-Only Banner */}
       {!isAdmin && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 animate-in slide-in-from-top-4 duration-300">
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-xl text-amber-800 dark:text-amber-400 animate-in slide-in-from-top-4 duration-300">
           <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0" />
           <p className="text-sm font-medium">
             <span className="font-bold">Read-Only Mode:</span> You are viewing the dashboard as a member. Switch to Admin mode in the sidebar to add or edit transactions.
@@ -159,9 +169,9 @@ export const TransactionsPage = () => {
 
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 leading-tight">Transactions</h1>
-          <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
-            History of your cash flow <span className="w-1 h-1 rounded-full bg-slate-300" /> {filteredTransactions.length} total entries
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">Transactions</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+            History of your cash flow <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" /> {filteredTransactions.length} total entries
           </p>
         </div>
         
@@ -203,18 +213,18 @@ export const TransactionsPage = () => {
             <input 
               type="text" 
               placeholder="Search by merchant..." 
-              className="w-full h-10 pl-10 pr-4 bg-slate-100/50 border-none rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none"
+              className="w-full h-10 pl-10 pr-4 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none dark:text-slate-200"
               value={filters.search}
               onChange={(e) => setFilter('search', e.target.value)}
             />
           </div>
 
-          <div className="flex items-center p-1 bg-slate-100 rounded-lg shrink-0">
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg shrink-0">
             {['all', 'income', 'expense'].map(type => (
               <button 
                 key={type}
                 onClick={() => setFilter('type', type)}
-                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all uppercase tracking-wider ${filters.type === type ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all uppercase tracking-wider ${filters.type === type ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {type}
               </button>
@@ -222,7 +232,7 @@ export const TransactionsPage = () => {
           </div>
 
           <select 
-            className="h-10 px-3 rounded-lg bg-slate-100/50 border-none text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-emerald-500/20"
+            className="h-10 px-3 rounded-lg bg-slate-100/50 dark:bg-slate-800/50 border-none text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-emerald-500/20 dark:text-slate-200"
             value={filters.categories[0] || ''}
             onChange={(e) => setFilter('categories', e.target.value ? [e.target.value] : [])}
           >
@@ -241,26 +251,26 @@ export const TransactionsPage = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Merchant</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Category</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Amount</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Action</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Date</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Merchant</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Category</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Amount</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {paginatedData.length > 0 ? paginatedData.map((tx, idx) => (
                 <tr 
                   key={tx.id} 
                   onClick={() => handleEdit(tx)}
-                  className={`group transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'} ${isAdmin ? 'cursor-pointer hover:bg-emerald-50/40' : ''}`}
+                  className={`group transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/30 dark:bg-slate-800/20'} ${isAdmin ? 'cursor-pointer hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5' : ''}`}
                 >
-                  <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                  <td className="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
                     {new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-slate-900">{tx.merchant}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-200">{tx.merchant}</p>
                     <div className="md:hidden flex items-center gap-2 mt-1">
                       <Badge variant={tx.type === 'income' ? 'success' : 'neutral'} className="px-1.5 py-0 text-[10px] uppercase">
                         {tx.category}
@@ -295,7 +305,7 @@ export const TransactionsPage = () => {
                         </button>
                       </div>
                     ) : (
-                      <div className="text-xs font-bold text-slate-300 uppercase tracking-tighter">Read Only</div>
+                      <div className="text-xs font-bold text-slate-300 dark:text-slate-700 uppercase tracking-tighter">Read Only</div>
                     )}
                   </td>
                 </tr>
@@ -303,10 +313,10 @@ export const TransactionsPage = () => {
                 <tr>
                   <td colSpan="5" className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="p-4 bg-slate-50 rounded-full text-slate-300">
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-300 dark:text-slate-600">
                         <Search className="w-10 h-10" />
                       </div>
-                      <p className="text-slate-500 font-medium">No transactions match your filters</p>
+                      <p className="text-slate-500 dark:text-slate-400 font-medium">No transactions match your filters</p>
                       <Button variant="ghost" size="sm" onClick={resetFilters}>Clear all filters</Button>
                     </div>
                   </td>
@@ -317,22 +327,22 @@ export const TransactionsPage = () => {
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+        <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Page {currentPage} of {Math.max(1, totalPages)}
           </p>
           <div className="flex items-center gap-2">
             <button 
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => p - 1)}
-              className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:enabled:bg-white hover:enabled:text-slate-900 disabled:opacity-30 transition-colors"
+              className="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-400 hover:enabled:bg-white dark:hover:enabled:bg-slate-700 hover:enabled:text-slate-900 dark:hover:enabled:text-white disabled:opacity-30 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button 
               disabled={currentPage === totalPages || totalPages === 0}
               onClick={() => setCurrentPage(p => p + 1)}
-              className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:enabled:bg-white hover:enabled:text-slate-900 disabled:opacity-30 transition-colors"
+              className="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-400 hover:enabled:bg-white dark:hover:enabled:bg-slate-700 hover:enabled:text-slate-900 dark:hover:enabled:text-white disabled:opacity-30 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

@@ -17,7 +17,7 @@ export const LoadingSkeleton = ({
 }) => {
   return (
     <div
-      className={`bg-slate-200 animate-skeleton-pulse rounded-md ${className}`}
+      className={`bg-slate-200 dark:bg-slate-800 animate-skeleton-pulse rounded-md ${className}`}
       style={{ width, height }}
       {...rest}
     />
