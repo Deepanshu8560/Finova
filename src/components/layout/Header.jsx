@@ -6,22 +6,21 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { ROUTES } from '../../lib/constants';
 
 const PAGE_TITLES = {
-  [ROUTES.DASHBOARD]:   'Overview',
-  [ROUTES.REVENUE]:     'Revenue',
-  [ROUTES.USERS]:       'Users',
-  [ROUTES.ACQUISITION]: 'Acquisition',
-  [ROUTES.SETTINGS]:    'Settings',
+  [ROUTES.DASHBOARD]:    'Dashboard',
+  [ROUTES.TRANSACTIONS]: 'Transactions',
+  [ROUTES.INSIGHTS]:     'Insights',
+  [ROUTES.SETTINGS]:     'Settings',
 };
 
 /**
  * Sticky top header bar (white bg, subtle border).
  *
  * @param {Object}   props
- * @param {Function} props.onMenuClick        — Opens the mobile sidebar drawer
- * @param {boolean}  [props.isAILoading=false] — Triggers the GitHub-style progress bar
+ * @param {Function} props.onMenuClick        - Opens the mobile sidebar drawer
+ * @param {boolean}  [props.isAILoading=false] - Triggers the GitHub-style progress bar
  * @returns {JSX.Element}
  */
-export const Header = ({ onMenuClick, isAILoading = false }) => {
+export const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuthContext();
   const location         = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -43,22 +42,11 @@ export const Header = ({ onMenuClick, isAILoading = false }) => {
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-sm border-b border-slate-200/80">
 
-      {/* GitHub-style AI loading progress bar */}
-      <div
-        className={`absolute inset-x-0 top-0 h-[2px] overflow-hidden transition-opacity duration-300 ${
-          isAILoading ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <div className="absolute inset-0 bg-slate-100" />
-        <div
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500 rounded-full"
-          style={{ animation: 'progress-bar 1.4s ease-in-out infinite', width: '65%' }}
-        />
-      </div>
+
 
       <div className="flex items-center justify-between h-14 px-4 sm:px-6">
 
-        {/* Left — hamburger + breadcrumb */}
+        {/* Left - hamburger + breadcrumb */}
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
@@ -73,7 +61,7 @@ export const Header = ({ onMenuClick, isAILoading = false }) => {
           </div>
         </div>
 
-        {/* Right — avatar + dropdown */}
+        {/* Right - avatar + dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             id="header-user-menu"

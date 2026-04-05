@@ -1,454 +1,333 @@
-import React, { useState, useEffect } from 'react';
-import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend
+import React, { useMemo, useState } from 'react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
-import { Sparkles, Zap, TrendingUp, TrendingDown } from 'lucide-react';
+import { 
+  TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, 
+  Wallet, DollarSign, CreditCard, PieChart as PieIcon,
+  ChevronRight
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { useDashboardData } from '../hooks/useDashboardData';
-import { useAIQuery } from '../hooks/useAIQuery';
-import { useAuthContext } from '../context/AuthContext';
-import { useQueryHistory } from '../hooks/useQueryHistory';
-import { useDashboardContext } from '../components/layout/DashboardLayout';
+import { useFinanceStore } from '../store/useFinanceStore';
+import { Card } from '../components/ui/Card';
+import { formatCurrency } from '../lib/utils';
+import { ROUTES } from '../lib/constants';
+import { NumberCounter } from '../components/ui/NumberCounter';
 
-import { StatCard } from '../components/dashboard/StatCard';
-import { ChartCard } from '../components/dashboard/ChartCard';
-import { DataTable } from '../components/dashboard/DataTable';
-import { SuggestedQuestions } from '../components/dashboard/SuggestedQuestions';
-import { AIResponseCard } from '../components/dashboard/AIResponseCard';
-import { Badge } from '../components/ui/Badge';
+const COLORS = ['#22C55E', '#3B82F6', '#F43F5E', '#A855F7', '#EAB308', '#06B6D4', '#F97316'];
 
-import { formatCurrency, formatNumber } from '../lib/utils';
+const DashboardPage = () => {
+  const { transactions, getSummary } = useFinanceStore();
+  const [timeRange, setTimeRange] = useState('all');
+  const summary = getSummary();
 
-/* ─────────────────────────────────────────────────
-   Chart colour tokens
-───────────────────────────────────────────────── */
-const CHART_COLORS = {
-  primary:       '#10b981',
-  primaryMid:    '#34d399',
-  gradientStart: 'rgba(16, 185, 129, 0.22)',
-  gradientEnd:   'rgba(16, 185, 129, 0)',
-  grid:          '#e2e8f0',
-  axis:          '#94a3b8',
-};
+  const recentTransactions = useMemo(() => {
+    return [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+  }, [transactions]);
 
-const PIE_COLORS = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
+  // Prepare chart data for Balance Trend based on time range
+  const chartData = useMemo(() => {
+    const data = [];
+    const now = new Date();
+    
+    if (timeRange === '30d') {
+      // Daily aggregation for 30 days
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const income = transactions.filter(tx => {
+          const dd = new Date(tx.date);
+          return dd.toDateString() === d.toDateString() && tx.type === 'income';
+        }).reduce((acc, tx) => acc + (tx.amount || 0), 0);
+        const expense = transactions.filter(tx => {
+          const dd = new Date(tx.date);
+          return dd.toDateString() === d.toDateString() && tx.type === 'expense';
+        }).reduce((acc, tx) => acc + (tx.amount || 0), 0);
+        data.push({ name: label, income, expense });
+      }
+    } else if (timeRange === '90d') {
+      // Weekly aggregation for 90 days (approx 13 weeks)
+      for (let i = 12; i >= 0; i--) {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i * 7 + 6));
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i * 7));
+        const label = `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+        const income = transactions.filter(tx => {
+          const dd = new Date(tx.date);
+          return dd >= start && dd <= end && tx.type === 'income';
+        }).reduce((acc, tx) => acc + (tx.amount || 0), 0);
+        const expense = transactions.filter(tx => {
+          const dd = new Date(tx.date);
+          return dd >= start && dd <= end && tx.type === 'expense';
+        }).reduce((acc, tx) => acc + (tx.amount || 0), 0);
+        data.push({ name: label, income, expense });
+      }
+    } else {
+      // Monthly aggregation for all time (show last 6/12 months or all)
+      const monthlyData = {};
+      const months = [];
+      const oldestDate = transactions.length > 0 
+        ? new Date(Math.min(...transactions.map(t => new Date(t.date).getTime())))
+        : new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      
+      const start = new Date(oldestDate.getFullYear(), oldestDate.getMonth(), 1);
+      let current = new Date(start);
+      
+      while (current <= now) {
+        const mLabel = current.toLocaleString('default', { month: 'short', year: '2-digit' });
+        months.push(mLabel);
+        monthlyData[mLabel] = { name: mLabel, income: 0, expense: 0, month: current.getMonth(), year: current.getFullYear() };
+        current.setMonth(current.getMonth() + 1);
+      }
 
-/* ─────────────────────────────────────────────────
-   Shared Recharts custom tooltip
-───────────────────────────────────────────────── */
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-elevated px-4 py-3 text-sm min-w-[140px]">
-      <p className="font-semibold text-slate-700 mb-1.5 text-xs uppercase tracking-wide">{label}</p>
-      {payload.map((entry, i) => (
-        <p key={i} className="text-slate-800 flex items-center gap-2">
-          <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
-          <span className="font-bold">
-            {typeof entry.value === 'number' && entry.name?.toLowerCase().includes('revenue')
-              ? formatCurrency(entry.value)
-              : formatNumber(entry.value)}
-          </span>
-        </p>
+      transactions.forEach(tx => {
+        const d = new Date(tx.date);
+        const mLabel = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+        if (monthlyData[mLabel]) {
+          if (tx.type === 'income') monthlyData[mLabel].income += (tx.amount || 0);
+          else monthlyData[mLabel].expense += (tx.amount || 0);
+        }
+      });
+      return months.map(m => monthlyData[m]);
+    }
+
+    return data;
+  }, [transactions, timeRange]);
+
+  // Helper for filtering by range
+  const filteredTransactionsByRange = useMemo(() => {
+    const now = new Date();
+    if (timeRange === '30d') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+      return transactions.filter(tx => new Date(tx.date) >= start);
+    }
+    if (timeRange === '90d') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90);
+      return transactions.filter(tx => new Date(tx.date) >= start);
+    }
+    return transactions;
+  }, [transactions, timeRange]);
+
+  // Prepare data for Category Donut
+  const categoryData = useMemo(() => {
+    const counts = {};
+    filteredTransactionsByRange.filter(tx => tx.type === 'expense').forEach(tx => {
+      counts[tx.category] = (counts[tx.category] || 0) + tx.amount;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredTransactionsByRange]);
+
+  const RangeFilter = ({ current, onChange }) => (
+    <div className="flex items-center p-1 bg-slate-100 rounded-lg shrink-0">
+      {['30d', '90d', 'all'].map(r => (
+        <button 
+          key={r}
+          onClick={() => onChange(r)}
+          className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider ${current === r ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          {r}
+        </button>
       ))}
     </div>
   );
-};
 
-/* ─────────────────────────────────────────────────
-   Pie chart custom legend
-───────────────────────────────────────────────── */
-const CustomPieLegend = ({ payload }) => (
-  <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-3">
-    {payload?.map((entry, i) => (
-      <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
-        <span>{entry.value}</span>
-      </div>
-    ))}
-  </div>
-);
-
-/* ─────────────────────────────────────────────────
-   Inline skeleton shimmer
-───────────────────────────────────────────────── */
-const Shimmer = ({ className = '' }) => (
-  <div className={`animate-skeleton-pulse bg-slate-200 rounded-md ${className}`} />
-);
-
-/**
- * Main Dashboard page showing KPIs, charts, data tables, and the AI query interface.
- * @returns {JSX.Element}
- */
-export const DashboardPage = () => {
-  const [timeRange, setTimeRange]         = useState('30d');
-  const [selectedQuestion, setSelectedQuestion] = useState('');
-
-  const { user }                           = useAuthContext();
-  const { metrics, revenueData, signupData, channelData, userData, loading }
-                                           = useDashboardData(timeRange);
-  const { response, loading: aiLoading, error: aiError, latencyMs, execute }
-                                           = useAIQuery();
-  const { saveQuery }                      = useQueryHistory(user?.uid);
-  const { setIsAILoading }                 = useDashboardContext();
-
-  // Keep the header progress bar in sync
-  useEffect(() => { setIsAILoading(aiLoading); }, [aiLoading, setIsAILoading]);
-
-  const handleAISubmit = async (question) => {
-    const q = question?.trim();
-    if (!q) return;
-    setSelectedQuestion(q);
-    const dashCtx = { metrics, revenueData, channelData, userData };
-    const answer  = await execute(q, dashCtx);
-    if (answer) saveQuery(q, answer, latencyMs);
-  };
-
-  /* ── User table column config ── */
-  const statusVariants = { Active: 'success', Churned: 'error', Trial: 'info' };
-
-  const userColumns = [
-    {
-      key: 'name', label: 'Name', sortable: true,
-      render: (val, row) => (
-        <div>
-          <p className="font-semibold text-slate-900 text-sm">{val}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{row.email}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'plan', label: 'Plan', sortable: true,
-      render: (val) => (
-        <Badge variant={val === 'Enterprise' ? 'purple' : val === 'Pro' ? 'info' : 'neutral'}>
-          {val}
-        </Badge>
-      ),
-    },
-    {
-      key: 'mrr', label: 'MRR', sortable: true,
-      render: (val) => (
-        <span className="font-bold text-slate-900 tabular-nums">{formatCurrency(val)}</span>
-      ),
-    },
-    {
-      key: 'joinDate', label: 'Join Date', sortable: true,
-      render: (val) => (
-        <span className="text-slate-500 text-sm">
-          {new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </span>
-      ),
-    },
-    {
-      key: 'status', label: 'Status', sortable: false,
-      render: (val) => <Badge variant={statusVariants[val] || 'neutral'}>{val}</Badge>,
-    },
-  ];
-
-  /* ─────────────────────────────────────────────
-     Render
-  ───────────────────────────────────────────── */
   return (
-    <div className="space-y-7 pb-16">
-
-      {/* ═══ ROW 1 — KPI stat cards ═══ */}
-      <section>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-
-          <StatCard
-            title="Monthly Recurring Revenue"
-            value={loading ? '' : formatCurrency(metrics?.mrr ?? 34200)}
-            delta="+12.4%"
-            deltaType="up"
-            subtext="vs. last month"
-            isLoading={loading}
-            accentColor="emerald"
-          />
-          <StatCard
-            title="Annual Recurring Revenue"
-            value={loading ? '' : formatCurrency(metrics?.arr ?? 410400)}
-            delta="+12.4%"
-            deltaType="up"
-            subtext="annualised MRR"
-            isLoading={loading}
-            accentColor="emerald"
-          />
-          <StatCard
-            title="Daily Active Users"
-            value={loading ? '' : formatNumber(metrics?.dau ?? 1847)}
-            delta="+5.2%"
-            deltaType="up"
-            subtext="vs. yesterday"
-            isLoading={loading}
-            accentColor="emerald"
-          />
-          <StatCard
-            title="Churn Rate"
-            value={loading ? '' : `${(metrics?.churnRate ?? 3.8)}%`}
-            delta="-0.4%"
-            deltaType="up"
-            subtext="lower is better ↓"
-            isLoading={loading}
-            accentColor="emerald"
-          />
-
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 leading-tight">Financial Overview</h1>
+          <p className="text-sm text-slate-500 mt-1">Real-time health check of your personal finances</p>
         </div>
-      </section>
+        <Link to={ROUTES.TRANSACTIONS} className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-2 transition-all bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl border border-emerald-100/50 shadow-sm">
+          Transaction History <ChevronRight className="w-4 h-4" />
+        </Link>
+      </header>
 
-      {/* ═══ ROW 2 — AI Query section ═══ */}
-      <section
-        className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white"
-        style={{
-          backgroundImage: 'radial-gradient(ellipse 80% 60% at 50% -20%, rgba(16,185,129,0.07), transparent)',
-        }}
-      >
-        {/* Subtle emerald top glow bar */}
-        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-primary-400 to-transparent opacity-60" />
-
-        <div className="p-6 sm:p-8">
-          {/* Heading */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
-              <Sparkles className="w-4.5 h-4.5 text-white" style={{ width: 18, height: 18 }} />
+      {/* A. Summary Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-50/50 to-white hover:shadow-md transition-all duration-300">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600 shadow-sm">
+              <Wallet className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 leading-none">Ask Your Data</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Powered by InsightAI · natural language queries</p>
+            <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-50/80 px-2 py-1 rounded-full shadow-sm border border-indigo-100/50">
+              <TrendingUp className="w-3 h-3" />
+              <span>12.5%</span>
             </div>
           </div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Balance</p>
+          <h2 className="text-3xl font-bold text-slate-900 leading-none">
+            <NumberCounter value={summary.totalBalance} formatter={formatCurrency} />
+          </h2>
+        </Card>
 
-          {/* Query input bar */}
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleAISubmit(selectedQuestion); }}
-            className={`
-              relative group w-full rounded-xl border transition-all duration-200 mb-4
-              ${aiLoading
-                ? 'border-primary-300 bg-primary-50/30 shadow-sm'
-                : 'border-slate-200 bg-slate-50 hover:border-slate-300 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:bg-white shadow-sm focus-within:shadow-md'}
-            `}
-          >
-            <div className="flex items-center w-full gap-2 pr-2">
-              <div className="pl-4 shrink-0 text-primary-400">
-                <Sparkles className="w-5 h-5" />
-              </div>
-
-              <input
-                type="text"
-                value={selectedQuestion}
-                onChange={(e) => setSelectedQuestion(e.target.value)}
-                placeholder="Ask anything about your data…  e.g. What drove churn last month?"
-                className="flex-1 bg-transparent border-none text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 py-4 pr-2"
-                disabled={aiLoading}
-              />
-
-              <button
-                type="submit"
-                disabled={!selectedQuestion.trim() || aiLoading}
-                className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
-                  selectedQuestion.trim() && !aiLoading
-                    ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-sm hover:shadow-md'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                {aiLoading
-                  ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  : <Zap className="w-4 h-4" />
-                }
-              </button>
+        <Card className="border-none shadow-sm bg-gradient-to-br from-emerald-50/50 to-white hover:shadow-md transition-all duration-300">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600 shadow-sm">
+              <ArrowUpRight className="w-5 h-5" />
             </div>
+            <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50/80 px-2 py-1 rounded-full shadow-sm border border-emerald-100/50">
+              <TrendingUp className="w-3 h-3" />
+              <span>8.3%</span>
+            </div>
+          </div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Income</p>
+          <h2 className="text-3xl font-bold text-slate-900 leading-none">
+            <NumberCounter value={summary.totalIncome} formatter={formatCurrency} />
+          </h2>
+        </Card>
 
-            {/* Animated bottom border when loading */}
-            {aiLoading && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-100 overflow-hidden rounded-b-xl">
-                <div
-                  className="h-full bg-primary-500 rounded-full"
-                  style={{ animation: 'progress-bar 1.5s ease-in-out infinite', width: '60%' }}
+        <Card className="border-none shadow-sm bg-gradient-to-br from-rose-50/50 to-white hover:shadow-md transition-all duration-300">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-rose-100 rounded-2xl text-rose-600 shadow-sm">
+              <ArrowDownRight className="w-5 h-5" />
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50/80 px-2 py-1 rounded-full shadow-sm border border-rose-100/50">
+              <TrendingDown className="w-3 h-3" />
+              <span>4.1%</span>
+            </div>
+          </div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Expenses</p>
+          <h2 className="text-3xl font-bold text-slate-900 leading-none">
+            <NumberCounter value={summary.totalExpenses} formatter={formatCurrency} />
+          </h2>
+        </Card>
+      </div>
+
+      {/* B. Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        {/* Balance Trend (2/3 width) */}
+        <Card className="lg:col-span-2 border-none shadow-elevated" bodyClassName="p-0">
+          <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 leading-none">Balance Trend</h3>
+              <p className="text-[11px] text-slate-400 font-medium mt-1">Cash flow activity</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <RangeFilter current={timeRange} onChange={setTimeRange} />
+              <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-tight shadow-sm border border-emerald-100/50">
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>Trend View</span>
+              </div>
+            </div>
+          </div>
+        <div className="p-6 h-[340px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={12} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v}`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', padding: '12px', color: '#fff', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                  labelStyle={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 'bold' }}
+                  formatter={(v) => formatCurrency(v)}
                 />
-              </div>
-            )}
-          </form>
+                <Area type="monotone" dataKey="income" name="Balance" stroke="#6366f1" strokeWidth={4} fillOpacity={1} fill="url(#balanceFill)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
 
-          {!aiLoading && !response && !aiError && (
-            <div className="mt-8 mb-4 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
-              <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mb-4 shadow-sm">
-                <Sparkles className="w-6 h-6 text-primary-400" />
-              </div>
-              <h3 className="text-base font-semibold text-slate-800 mb-6 tracking-tight">
-                What would you like to know about your data?
-              </h3>
-              <SuggestedQuestions onSelect={handleAISubmit} />
+        {/* Spending Breakdown (1/3 width) */}
+        <Card className="lg:col-span-1 border-none shadow-elevated flex flex-col h-full bg-white">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 leading-none">Spending Breakdown</h3>
+              <p className="text-[11px] text-slate-400 font-medium mt-1">By category</p>
             </div>
-          )}
-
-          {/* AI response / error / loading skeleton */}
-          {(aiLoading || response || aiError) && (
-            <div className="mt-5">
-              {aiLoading ? (
-                <div className="border border-slate-200 rounded-xl p-5 bg-white/70 flex flex-col gap-3 shadow-sm">
-                  <Shimmer className="h-3.5 w-1/4" />
-                  <Shimmer className="h-3.5 w-full" />
-                  <Shimmer className="h-3.5 w-4/5" />
-                  <Shimmer className="h-3.5 w-3/5" />
+            <RangeFilter current={timeRange} onChange={setTimeRange} />
+          </div>
+          
+          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-4 flex-1">
+            <div className="relative w-40 h-40 shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={6}
+                    dataKey="value"
+                    strokeWidth={0}
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="hover:opacity-80 transition-opacity outline-none" />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(v) => formatCurrency(v)}
+                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', padding: '10px', color: '#fff' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase leading-none mb-0.5">Total</p>
+                  <p className="text-sm font-mono font-bold text-slate-900 leading-none">
+                    {formatCurrency(categoryData.reduce((acc, c) => acc + c.value, 0)).split('.')[0]}
+                  </p>
                 </div>
-              ) : (
-                <AIResponseCard
-                  question={selectedQuestion}
-                  answer={response}
-                  error={aiError}
-                  timestamp={new Date()}
-                  latency={latencyMs}
-                  isTyping={aiLoading}
-                />
-              )}
+              </div>
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* ═══ ROW 3 — Revenue + Signups charts ═══ */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Revenue Area Chart */}
-        <ChartCard
-          title="Revenue Growth"
-          subtitle="Monthly recurring revenue trend"
-          timeRange={timeRange}
-          onTimeRangeChange={setTimeRange}
-          isLoading={loading}
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={revenueData} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={CHART_COLORS.primary} stopOpacity={0.22} />
-                  <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}    />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-              <XAxis
-                dataKey="month"
-                stroke={CHART_COLORS.axis}
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke={CHART_COLORS.axis}
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
-              />
-              <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: CHART_COLORS.primary, strokeWidth: 1, strokeDasharray: '4 4' }} />
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                name="Revenue"
-                stroke={CHART_COLORS.primary}
-                strokeWidth={2.5}
-                fill="url(#revenueGradient)"
-                dot={false}
-                activeDot={{ r: 5, fill: CHART_COLORS.primary, strokeWidth: 2, stroke: '#fff' }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* Daily Signups Bar Chart */}
-        <ChartCard
-          title="Daily Signups"
-          subtitle={`Last ${timeRange === 'all' ? '90' : timeRange.replace('d', '')} days`}
-          timeRange={timeRange}
-          onTimeRangeChange={setTimeRange}
-          isLoading={loading}
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={signupData} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
-              <XAxis
-                dataKey="date"
-                stroke={CHART_COLORS.axis}
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                minTickGap={40}
-                tickFormatter={(v) => {
-                  const d = new Date(v);
-                  return `${d.getMonth() + 1}/${d.getDate()}`;
-                }}
-              />
-              <YAxis stroke={CHART_COLORS.axis} fontSize={11} tickLine={false} axisLine={false} />
-              <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16,185,129,0.06)' }} />
-              <Bar
-                dataKey="signups"
-                name="Signups"
-                fill={CHART_COLORS.primary}
-                radius={[4, 4, 0, 0]}
-                maxBarSize={18}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-      </section>
-
-      {/* ═══ ROW 4 — Acquisition pie + Top users table ═══ */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Acquisition channels donut */}
-        <ChartCard
-          title="Acquisition Channels"
-          subtitle="Where your users come from"
-          isLoading={loading}
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={channelData}
-                cx="50%"
-                cy="44%"
-                innerRadius={64}
-                outerRadius={100}
-                paddingAngle={4}
-                dataKey="value"
-                nameKey="name"
-                stroke="none"
-              >
-                {channelData?.map((_, i) => (
-                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                ))}
-              </Pie>
-              <RechartsTooltip content={<CustomTooltip />} />
-              <Legend content={<CustomPieLegend />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* Top users */}
-        <div className="flex flex-col min-h-0">
-          <div className="mb-3 flex items-end justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Top Users</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Highest MRR-contributing accounts</p>
+            
+            <div className="flex-1 space-y-2.5 w-full">
+               {categoryData.slice(0, 7).map((category, index) => (
+                  <div key={category.name} className="flex items-center justify-between group">
+                     <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                        <span className="text-[11px] font-bold text-slate-600 truncate max-w-[80px] uppercase tracking-tight">{category.name}</span>
+                     </div>
+                     <span className="text-[11px] font-mono font-bold text-slate-900">{formatCurrency(category.value)}</span>
+                  </div>
+               ))}
             </div>
-            <span className="text-xs text-slate-400 font-medium">
-              {userData?.length ?? 0} accounts
-            </span>
           </div>
-          <div className="flex-1">
-            <DataTable
-              columns={userColumns}
-              data={userData ?? []}
-              isLoading={loading}
-              emptyMessage="No users found"
-            />
-          </div>
+        </Card>
+      </div>
+
+      {/* C. Recent Flows (Full Width) */}
+      <Card className="border-none shadow-elevated" bodyClassName="p-0">
+        <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">
+          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            Recent Flows <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          </h3>
+          <Link to={ROUTES.TRANSACTIONS} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-4">Browse Ledger</Link>
         </div>
-
-      </section>
-
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-6 p-8 overflow-y-auto min-h-[300px]">
+          {recentTransactions.map((tx) => (
+            <div key={tx.id} className="flex items-center gap-6 group hover:-translate-y-0.5 transition-all duration-300">
+              <div className={`w-14 h-14 rounded-3xl flex items-center justify-center shrink-0 shadow-sm transition-all duration-300 group-hover:shadow-md ${tx.type === 'income' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 'bg-rose-50 text-rose-600 border border-rose-100/50'}`}>
+                {tx.type === 'income' ? <ArrowUpRight className="w-6.5 h-6.5" /> : <ArrowDownRight className="w-6.5 h-6.5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-extrabold text-slate-900 truncate group-hover:text-indigo-600 transition-colors uppercase tracking-wider">{tx.merchant}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">{tx.category}</span>
+                   <span className="text-[10px] text-slate-300 font-bold">•</span>
+                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={`text-base font-mono font-bold tracking-tight ${tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 };

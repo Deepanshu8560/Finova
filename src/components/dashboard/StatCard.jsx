@@ -5,13 +5,13 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
  * KPI Dashboard stat card. Displays a title, large value, trend delta, and optional sub-text.
  *
  * @param {Object}  props
- * @param {string}  props.title        — Metric label
- * @param {string}  props.value        — Formatted primary value
- * @param {string}  [props.delta]      — Delta text, e.g. "+12.4%"
+ * @param {string}  props.title        - Metric label
+ * @param {string}  props.value        - Formatted primary value
+ * @param {string}  [props.delta]      - Delta text, e.g. "+12.4%"
  * @param {'up'|'down'|'neutral'} [props.deltaType='neutral']
- * @param {string}  [props.subtext]    — Secondary line below delta
+ * @param {string}  [props.subtext]    - Secondary line below delta
  * @param {boolean} [props.isLoading=false]
- * @param {string}  [props.accentColor='emerald'] — Currently unused (reserved)
+ * @param {string}  [props.accentColor='emerald'] - Currently unused (reserved)
  * @returns {JSX.Element}
  */
 export const StatCard = ({

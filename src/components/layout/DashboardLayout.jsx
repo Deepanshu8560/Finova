@@ -1,13 +1,9 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
-/**
- * Context to allow child pages to signal AI loading state to the header progress bar.
- */
-const DashboardContext = createContext({ isAILoading: false, setIsAILoading: () => {} });
-export const useDashboardContext = () => useContext(DashboardContext);
+
 
 /**
  * Root layout: sidebar (fixed/sticky) + header + scrollable content area.
@@ -15,21 +11,17 @@ export const useDashboardContext = () => useContext(DashboardContext);
  */
 export const DashboardLayout = () => {
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
-  const [isAILoading,  setIsAILoading]  = useState(false);
 
   return (
-    <DashboardContext.Provider value={{ isAILoading, setIsAILoading }}>
-      {/* Full-viewport flex row */}
-      <div className="min-h-screen bg-[#f8fafc] flex">
+    <div className="min-h-screen bg-[#f8fafc] flex">
 
-        {/* Sidebar — on lg+ it occupies its natural width in the flex row */}
+        {/* Sidebar - on lg+ it occupies its natural width in the flex row */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Right column — header + page content */}
+        {/* Right column - header + page content */}
         <div className="flex-1 flex flex-col min-w-0 min-h-screen">
           <Header
             onMenuClick={() => setSidebarOpen(true)}
-            isAILoading={isAILoading}
           />
 
           {/* Scrollable main content */}
@@ -41,7 +33,6 @@ export const DashboardLayout = () => {
         </div>
 
       </div>
-    </DashboardContext.Provider>
   );
 };
 

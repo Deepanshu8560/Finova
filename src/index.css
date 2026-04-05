@@ -20,7 +20,7 @@
 
   /* Page fade-in on route mount */
   .page-fade {
-    animation: fade-in 0.3s ease both;
+    animation: fade-in 0.05s ease-out both;
   }
 
   /* 3D Motion Graphic Utilities */

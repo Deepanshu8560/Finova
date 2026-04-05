@@ -19,14 +19,24 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const getRoleFromEmail = (email) => {
+    if (!email) return 'Viewer';
+    const emailLower = email.toLowerCase();
+    if (emailLower.startsWith('admin') || emailLower.startsWith('founder')) return 'Admin';
+    return 'Viewer';
+  };
+
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
-      // Mock mode — no real auth, just leave user as null (login sets it manually)
+      // Mock mode - no real auth, just leave user as null (login sets it manually)
       setTimeout(() => setLoading(false), 300);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        currentUser.role = getRoleFromEmail(currentUser.email);
+      }
       setUser(currentUser);
       setLoading(false);
     });
@@ -40,7 +50,9 @@ export const useAuth = () => {
     try {
       if (!isFirebaseConfigured) {
         await new Promise(r => setTimeout(r, 600));
-        setUser({ uid: 'mock_uid_1', email, displayName: 'Founder' });
+        const mockUser = { uid: 'mock_uid_1', email, displayName: 'Founder' };
+        mockUser.role = getRoleFromEmail(email);
+        setUser(mockUser);
         return;
       }
       await signInWithEmailAndPassword(auth, email, password);
@@ -58,7 +70,9 @@ export const useAuth = () => {
     try {
       if (!isFirebaseConfigured) {
         await new Promise(r => setTimeout(r, 600));
-        setUser({ uid: 'mock_uid_2', email, displayName: 'New Founder' });
+        const mockUser = { uid: 'mock_uid_2', email, displayName: 'New Founder' };
+        mockUser.role = getRoleFromEmail(email);
+        setUser(mockUser);
         return;
       }
       await createUserWithEmailAndPassword(auth, email, password);
@@ -76,7 +90,9 @@ export const useAuth = () => {
     try {
       if (!isFirebaseConfigured) {
         await new Promise(r => setTimeout(r, 800));
-        setUser({ uid: 'mock_uid_oauth', email: 'founder@startup.co', displayName: 'Google Founder' });
+        const mockUser = { uid: 'mock_uid_oauth', email: 'founder@finova.com', displayName: 'Google Founder' };
+        mockUser.role = 'Admin';
+        setUser(mockUser);
         return;
       }
       const provider = new GoogleAuthProvider();

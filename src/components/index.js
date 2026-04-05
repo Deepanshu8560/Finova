@@ -15,3 +15,6 @@ export { AIQueryBar } from './dashboard/AIQueryBar';
 export { AIResponseCard } from './dashboard/AIResponseCard';
 export { SuggestedQuestions } from './dashboard/SuggestedQuestions';
 export { LoadingSkeleton } from './dashboard/LoadingSkeleton';
+
+// Page Components
+export { default as FinanceDashboard } from './FinanceDashboard';

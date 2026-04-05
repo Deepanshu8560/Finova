@@ -1,21 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, TrendingUp, Users, Megaphone,
-  X, BarChart3, UploadCloud, Lightbulb
+  LayoutDashboard, CreditCard, BarChart3,
+  X, BarChart2, Shield, Eye, ChevronUp
 } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
-import { useDataContext } from '../../context/DataContext';
+import { useFinanceStore } from '../../store/useFinanceStore';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { ROUTES } from '../../lib/constants';
 
 const NAV_ITEMS = [
-  { label: 'Overview',     icon: LayoutDashboard, path: ROUTES.DASHBOARD },
-  { label: 'Revenue',      icon: TrendingUp,       path: ROUTES.REVENUE },
-  { label: 'Users',        icon: Users,            path: ROUTES.USERS },
-  { label: 'Acquisition',  icon: Megaphone,        path: ROUTES.ACQUISITION },
-  { label: 'Suggestions',  icon: Lightbulb,        path: ROUTES.SUGGESTIONS },
+  { label: 'Dashboard',    icon: LayoutDashboard, path: ROUTES.DASHBOARD },
+  { label: 'Transactions', icon: CreditCard,       path: ROUTES.TRANSACTIONS },
+  { label: 'Insights',     icon: BarChart2,        path: ROUTES.INSIGHTS },
 ];
 
 /**
@@ -23,21 +21,14 @@ const NAV_ITEMS = [
  * On mobile it becomes a slide-in drawer controlled by isOpen / onClose.
  *
  * @param {Object}   props
- * @param {boolean}  props.isOpen   — Whether the mobile drawer is visible
- * @param {Function} props.onClose  — Callback to dismiss drawer
+ * @param {boolean}  props.isOpen   - Whether the mobile drawer is visible
+ * @param {Function} props.onClose  - Callback to dismiss drawer
  * @returns {JSX.Element}
  */
 export const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuthContext();
-  const { uploadFile } = useDataContext();
-  const fileInputRef = useRef(null);
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadFile(file);
-    }
-  };
+  const { role, setRole } = useFinanceStore();
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   return (
     <>
@@ -66,7 +57,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
               <BarChart3 className="w-4 h-4 text-white" />
             </div>
             <span className="text-base font-bold text-white tracking-tight select-none">
-              InsightAI
+              Finova
             </span>
           </NavLink>
 
@@ -84,21 +75,6 @@ export const Sidebar = ({ isOpen, onClose }) => {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 px-3 mb-2">
             Main
           </p>
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="relative flex justify-start items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 w-full mb-1"
-          >
-            <UploadCloud className="w-4 h-4 shrink-0 transition-colors text-slate-500 group-hover:text-slate-300" />
-            <span>Upload Data</span>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept=".csv,.pdf,.docx" 
-              onChange={handleFileUpload} 
-            />
-          </button>
 
           {NAV_ITEMS.map(item => (
             <NavLink
@@ -134,20 +110,52 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
         </nav>
 
-        {/* ── User profile ── */}
-        <div className="px-3 pb-4 pt-2 border-t border-slate-800/80 shrink-0">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 backdrop-blur-sm">
+        {/* ── Role Switcher & User ── */}
+        <div className="px-3 pb-6 pt-2 border-t border-slate-800/80 shrink-0 space-y-3">
+          
+          {/* Role Switcher */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowRoleMenu(!showRoleMenu)}
+              className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-800/40 border border-slate-700/50 text-xs font-bold text-slate-300 hover:bg-slate-800/60 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                {role === 'admin' ? <Shield className="w-3.5 h-3.5 text-emerald-400" /> : <Eye className="w-3.5 h-3.5 text-blue-400" />}
+                <span className="uppercase tracking-wider">{role} Mode</span>
+              </div>
+              <ChevronUp className={`w-3.5 h-3.5 transition-transform ${showRoleMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showRoleMenu && (
+              <div className="absolute bottom-full left-0 w-full mb-2 bg-[#1e293b] border border-slate-700 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <button 
+                  onClick={() => { setRole('admin'); setShowRoleMenu(false); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-bold uppercase transition-colors ${role === 'admin' ? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                >
+                  <Shield className="w-3.5 h-3.5" /> Admin
+                </button>
+                <button 
+                  onClick={() => { setRole('viewer'); setShowRoleMenu(false); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-xs font-bold uppercase transition-colors ${role === 'viewer' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                >
+                  <Eye className="w-3.5 h-3.5" /> Viewer
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 backdrop-blur-sm border border-slate-700/30">
             <Avatar
               name={user?.displayName || user?.email}
               src={user?.photoURL}
               size="sm"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-200 truncate leading-none mb-1">
+              <p className="text-sm font-semibold text-slate-200 truncate leading-none mb-1.5">
                 {user?.displayName || 'Founder'}
               </p>
-              <Badge variant="success" className="text-[10px] px-1.5 py-0">
-                Pro Plan
+              <Badge variant={role === 'admin' ? 'success' : 'neutral'} className="text-[9px] px-1.5 py-0 uppercase tracking-tighter">
+                {role}
               </Badge>
             </div>
           </div>

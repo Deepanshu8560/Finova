@@ -6,8 +6,8 @@ import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Inbox } from 'lucide
  * Sortable, paginated data table for mock user data.
  *
  * @param {Object}   props
- * @param {Array}    props.columns       — Column config: { key, label, sortable?, render? }
- * @param {Array}    [props.data=[]]     — Row data
+ * @param {Array}    props.columns       - Column config: { key, label, sortable?, render? }
+ * @param {Array}    [props.data=[]]     - Row data
  * @param {boolean}  [props.isLoading=false]
  * @param {string}   [props.emptyMessage]
  * @returns {JSX.Element}

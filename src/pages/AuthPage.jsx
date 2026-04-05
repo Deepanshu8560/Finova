@@ -58,7 +58,7 @@ export const AuthPage = () => {
     <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center p-4">
       <div className="mb-8 flex items-center justify-center gap-2 text-primary-600">
         <BarChart3 className="w-8 h-8" />
-        <span className="text-2xl font-bold tracking-tight text-slate-900">InsightAI</span>
+        <span className="text-2xl font-bold tracking-tight text-slate-900">Finova</span>
       </div>
 
       <Card className="w-full max-w-md p-8 pt-10 shadow-elevated">

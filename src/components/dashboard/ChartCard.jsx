@@ -6,12 +6,12 @@ import { TimeRangeSelector } from './TimeRangeSelector';
  * and a loading skeleton.
  *
  * @param {Object}   props
- * @param {string}   props.title               — Chart heading
- * @param {string}   [props.subtitle='']       — Secondary description
- * @param {string}   [props.timeRange='']      — Selected time range value
- * @param {Function} [props.onTimeRangeChange] — Passed to TimeRangeSelector
- * @param {boolean}  [props.isLoading=false]   — Shows skeleton while data loads
- * @param {React.ReactNode} props.children     — Recharts markup
+ * @param {string}   props.title               - Chart heading
+ * @param {string}   [props.subtitle='']       - Secondary description
+ * @param {string}   [props.timeRange='']      - Selected time range value
+ * @param {Function} [props.onTimeRangeChange] - Passed to TimeRangeSelector
+ * @param {boolean}  [props.isLoading=false]   - Shows skeleton while data loads
+ * @param {React.ReactNode} props.children     - Recharts markup
  * @returns {JSX.Element}
  */
 export const ChartCard = ({

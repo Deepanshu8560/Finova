@@ -9,16 +9,16 @@ import { ThreeDMotionGraphic } from '../components/ui/ThreeDMotionGraphic';
    Ticker bar items
 ───────────────────────────────────────────────── */
 const TICKER_ITEMS = [
-  '2,400+ Founders',
-  '1.2M Questions Answered',
-  'Avg 380ms Response',
+  '1,200+ Smart Savers',
+  '24/7 Smart Monitoring',
+  'Instant Bank Sync',
   '99.9% Uptime',
-  'SOC 2 Compliant',
-  'No SQL Required',
+  'AES-256 Encrypted',
+  'Manual Entry Free',
 ];
 
 /**
- * Landing page — public-facing marketing page for InsightAI.
+ * Landing page - public-facing marketing page for Finova.
  * Includes sticky nav, hero, social-proof ticker, features grid, and footer.
  * @returns {JSX.Element}
  */
@@ -28,10 +28,13 @@ export function LandingPage() {
   const [heroVisible, setHeroVisible] = useState(false);
 
   useEffect(() => {
-    setHeroVisible(true);
+    const timer = setTimeout(() => setHeroVisible(true), 100);
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   return (
@@ -60,7 +63,7 @@ export function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md group-hover:shadow-primary-500/30 transition-shadow">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-white">InsightAI</span>
+            <span className="font-bold text-xl tracking-tight text-white">Finova</span>
           </Link>
 
           {/* Nav actions */}
@@ -104,22 +107,22 @@ export function LandingPage() {
           >
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/25 text-primary-400 text-sm font-semibold mb-7 backdrop-blur-sm">
-              <Sparkles className="w-3.5 h-3.5" />
-              AI-Powered Analytics
+              <TrendingUp className="w-3.5 h-3.5" />
+              Smart Finance Tracking
             </div>
 
             {/* Headline */}
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[82px] font-extrabold tracking-tight leading-[1.05] mb-6 max-w-5xl">
-              Ask Your Data{' '}
+              Understand Your Data{' '}
               <span className="bg-gradient-to-r from-primary-400 via-primary-300 to-emerald-300 bg-clip-text text-transparent">
-                Anything.
+                Instantly.
               </span>
             </h1>
 
             {/* Sub-headline */}
             <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed">
-              InsightAI turns your startup metrics into plain English answers.{' '}
-              <span className="text-slate-300">No SQL. No analyst. Just ask.</span>
+              Finova turns your spending habits into actionable growth segments.{' '}
+              <span className="text-slate-300">Automated trends. Smart budgeting. Total financial clarity.</span>
             </p>
 
             {/* CTAs */}
@@ -158,7 +161,7 @@ export function LandingPage() {
                 ))}
               </div>
               <p className="text-sm text-slate-400">
-                <span className="font-semibold text-slate-200">Join 2,400+</span> founders already using InsightAI
+                <span className="font-semibold text-slate-200">Join 1,200+</span> individuals already using Finova
               </p>
             </div>
           </div>
@@ -182,10 +185,10 @@ export function LandingPage() {
         <div className="flex gap-0 animate-ticker-scroll">
           {[...TICKER_ITEMS, ...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
             <div key={i} className="flex items-center gap-6 shrink-0 px-8">
-              {item === 'Avg 380ms Response' ? (
+              {item === 'Real-time Updates' ? (
                 <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/50 rounded-full px-3 py-1 shadow-sm">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">Avg 380ms Response</span>
+                  <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">Live Syncing</span>
                 </div>
               ) : (
                 <span className="text-sm font-semibold text-slate-300 whitespace-nowrap">{item}</span>
@@ -202,38 +205,38 @@ export function LandingPage() {
       <section className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 py-28">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-            Built for founders, not data engineers.
+            Master your money with ease.
           </h2>
           <p className="text-slate-400 text-lg max-w-xl mx-auto">
-            Everything you need to understand your business — zero technical overhead.
+            Everything you need to understand your finances - zero manual tracking required.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
-              icon: Zap,
+              icon: Sparkles,
               color: 'text-primary-400',
               bg: 'bg-primary-500/10',
               border: 'border-primary-500/20',
-              title: 'No SQL Required',
-              desc: 'Stop waiting on your data team. Just type your question in plain English and get an instant, cited answer.',
+              title: 'Categorized Spending',
+              desc: 'Automatically categorize and visualize your spending to find hidden savings and stay on top of your monthly budget.',
             },
             {
-              icon: Database,
+              icon: BarChart3,
               color: 'text-violet-400',
               bg: 'bg-violet-500/10',
               border: 'border-violet-500/20',
-              title: 'Real-Time Answers',
-              desc: 'Metrics refresh automatically. Ask about today\'s signups, last week\'s churn, or this quarter\'s revenue — right now.',
+              title: 'Real-Time Tracking',
+              desc: 'Stop guessing where your money goes. Get instant updates on every transaction and see your net worth evolve in real-time.',
             },
             {
               icon: Shield,
               color: 'text-emerald-400',
               bg: 'bg-emerald-500/10',
               border: 'border-emerald-500/20',
-              title: 'Your Data Stays Private',
-              desc: 'We never train our models on your business data. Everything is encrypted end-to-end with SOC 2 compliance.',
+              title: 'Bank-Level Security',
+              desc: 'Your privacy is our priority. We use AES-256 encryption and secure OAuth connections to keep your financial data safe and anonymous.',
             },
           ].map(feature => (
             <div
@@ -259,10 +262,10 @@ export function LandingPage() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary-400/60 to-transparent" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-            Ready to understand your business?
+            Ready to master your finances?
           </h2>
           <p className="text-slate-400 mb-8 text-lg">
-            Join 2,400+ founders who get instant answers from their data.
+            Join 1,200+ individuals who get instant clarity from their spending.
           </p>
           {user ? (
             <Link to="/dashboard">
@@ -274,7 +277,7 @@ export function LandingPage() {
           ) : (
             <Link to="/auth">
               <button className="inline-flex items-center gap-2 text-base font-semibold bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-xl transition-all duration-200 shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 hover:-translate-y-0.5">
-                Start Free — No credit card needed
+                Start Free - No credit card needed
                 <ArrowRight className="w-4 h-4" />
               </button>
             </Link>
@@ -291,7 +294,7 @@ export function LandingPage() {
             <div className="w-7 h-7 rounded-lg bg-primary-500/20 flex items-center justify-center">
               <BarChart3 className="w-3.5 h-3.5 text-primary-400" />
             </div>
-            <span className="font-bold text-white tracking-tight">InsightAI</span>
+            <span className="font-bold text-white tracking-tight">Finova</span>
           </div>
 
           <div className="flex items-center gap-6 text-sm font-medium text-slate-500">
@@ -299,7 +302,7 @@ export function LandingPage() {
             <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
           </div>
 
-          <p className="text-sm text-slate-600">© 2026 InsightAI, Inc. All rights reserved.</p>
+          <p className="text-sm text-slate-600">© 2026 Finova, Inc. All rights reserved.</p>
         </div>
       </footer>
     </div>
